@@ -1,0 +1,855 @@
+
+<link href="include/highslide-styles.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="include/localizeformat.js"></script>	
+<script type="text/javascript" src="include/highslide.js"></script>
+<script type="text/javascript" src="include/highslide.cfg.js"></script>  
+<STYLE type=text/css>
+.totalrow
+{
+    BORDER-RIGHT: #c6d2de 1px solid;
+    PADDING-RIGHT: 5px;
+    BORDER-BOTTOM: #54678c 1px solid;
+    PADDING-LEFT: 5px;
+    FONT-WEIGHT: bold;
+    BACKGROUND: #ffffff;
+    PADDING-BOTTOM: 1px;
+    BORDER-LEFT: #c6d2de 1px solid;
+    COLOR: #666666;
+    PADDING-TOP: 1px;
+    BORDER-TOP: #c6d2de 3px double
+}
+.subtotalrow
+{
+    BORDER-RIGHT: #c6d2de 1px solid;
+    PADDING-RIGHT: 5px;
+    BORDER-TOP: #54678c 1px solid;
+    PADDING-LEFT: 5px;
+    FONT-WEIGHT: bold;
+    BACKGROUND: #ffffff;
+    PADDING-BOTTOM: 1px;
+    BORDER-LEFT: #c6d2de 1px solid;
+    COLOR: #666666;
+    PADDING-TOP: 1px;
+    BORDER-BOTTOM: #c6d2de 3px double
+}
+.Hide {display: none;}
+.Show {	display: ;}
+</STYLE>
+<script src="include/ajax.js"></script>
+<script src="include/budgets.js"></script>
+<script src="include/checkout.js"></script>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+var dblBudgetSet=0;
+var strCurrencySymbol = "{CurrencySymbol}";
+
+function stopRKey(evt) {
+  var evt = (evt) ? evt : ((event) ? event : null);
+  var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+  if ((evt.keyCode == 13) && (node.type!="textarea"))  {return false;}
+}
+document.onkeypress = stopRKey;
+
+function CheckLiveStock()
+{
+	if(!AjaxGet("CheckLiveStockAjax.asp?Orders={orderids}", AfterCheckStock, false))
+	{
+		alert("Browser doesn't support AJAX");
+	} 
+	else
+	{
+		if (xmlHttp.responseText=='NOKCap')
+		{
+		  alert('{Cart - Quantity Cap Error Return Cart}');
+		  window.location = 'cart.asp'
+		  return false;
+		}
+		else if (xmlHttp.responseText=='NOK') 
+		{
+			alert('{Cart - Stock Level Error}');
+			window.location = 'cart.asp'
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+}
+	
+function AfterCheckStock()
+{
+return true;
+}
+
+function setup()
+{
+	if(document.getElementById('EIFGroupNameList').value!='') EIFGroupClicked('');
+	TogglePONumber({invoiceOnly});
+	{freightload}
+}
+
+function UpdateSplitFreight(intOrderAddress,intIndex)
+{
+	var dblCostOfItems = {CostOfItems};
+	var dblTaxCostOfItems = {TaxCostOfItems};
+	var dblHandling = {HandlingCost};
+	var dblFreight = 0;
+	var dblTax = 0;
+	var i;
+	document.Form1.elements['freightSelectionAddr'+intOrderAddress].value = intIndex;
+<!--SplitFREIGHTJavascript-->
+	if (typeof tax != "undefined") {
+	dblTax = parseFloat(dblTax.toFixed(2));
+	tax.innerHTML = strCurrencySymbol + localizeNumber((dblTax + dblTaxCostOfItems).toFixed(2));
+	subtotal.innerHTML = strCurrencySymbol + localizeNumber((dblCostOfItems + dblFreight + dblHandling).toFixed(2));
+	}
+	freightcost.innerHTML = strCurrencySymbol + localizeNumber(dblFreight.toFixed(2));
+	freighthandlingcost.innerHTML = strCurrencySymbol + localizeNumber((dblFreight + dblHandling).toFixed(2));
+	document.getElementById('hidtotal').value = (dblCostOfItems + dblFreight + dblHandling + dblTax + dblTaxCostOfItems).toFixed(2);
+	total.innerHTML = strCurrencySymbol + localizeNumber(document.getElementById('hidtotal').value);
+	CalculateTotalWithVouchers();
+}
+function resetTaxDetails()
+{
+	var inputs = document.getElementsByTagName("input");
+	for(var i = 0; i < inputs.length; i++) {
+		if(inputs[i].id.indexOf('OriginalNetTaxedAt') == 0) 
+		{
+			document.getElementById(inputs[i].id.replace('Original','')).innerHTML = localizeNumber((parseFloat(document.getElementById(inputs[i].id).value)).toFixed(2));
+			document.getElementById('hid'+inputs[i].id.replace('Original','')).value = (parseFloat(document.getElementById(inputs[i].id).value)).toFixed(2);
+		}
+	}
+
+}
+
+function IsDisplayTaxRatesAppliedAtTheCart()
+{
+	var inputs = document.getElementsByTagName("input");
+	for (var i = 0; i < inputs.length; i++) 
+	{
+		if(inputs[i].id.indexOf("hidNetTaxedAt") == 0)
+		return true;
+	}
+	return false;
+}
+
+function UpdateFreight(intIndex)
+{
+<!--COST-->
+	var dblCostOfItems = {CostOfItems};
+	var dblCostOfTaxableItems = {CostOfTaxableItems};
+	var dblHandling = {HandlingCost};
+	var dblTax = {TaxRate};
+	var dblTaxCost = 0;
+	var blnTaxFreight = {TaxFreight};
+	var dblDiscount = {Discount};
+	var dblCostOfItemsPlusTax = {CostOfItemsPlusTax};
+	var dblTaxCostOfItems = {TaxCostOfItems};
+	var dblCostOfItemsTaxedAtDefaultTaxRate = 0;
+<!--FREIGHTJavascript-->
+
+	if (isEmpty(intIndex))
+	{
+		intIndex = document.Form1.elements['hidfreight'].value
+	}
+	else
+	{
+		document.Form1.elements['hidfreight'].value = intIndex
+	}
+
+	var dblFreight = parseFloat(document.Form1.elements['FreightCostOp' + intIndex].value);
+	document.getElementById('freightcost').innerHTML = strCurrencySymbol + localizeNumber(dblFreight.toFixed(2));
+	document.getElementById('freighthandlingcost').innerHTML = strCurrencySymbol + localizeNumber((dblFreight + dblHandling).toFixed(2));
+<!--TAXJavascript-->
+	if (!(IsDisplayTaxRatesAppliedAtTheCart()))
+	{  //No Display Tax Rates Applied at the Cart
+		document.getElementById('subtotal').innerHTML = strCurrencySymbol + localizeNumber((dblCostOfItems + dblFreight + dblHandling).toFixed(2));
+		if (blnTaxFreight)
+		{
+			dblTaxCost = dblTax * (dblFreight + dblHandling) + dblTaxCostOfItems
+			document.getElementById('tax').innerHTML = strCurrencySymbol + localizeNumber(dblTaxCost.toFixed(2));
+		} else
+		{
+			dblTaxCost = dblTaxCostOfItems
+			document.getElementById('tax').innerHTML = strCurrencySymbol + localizeNumber(dblTaxCost.toFixed(2));
+		}
+	} else
+	{//Display Tax Rates Applied at the Cart
+		if (blnTaxFreight)
+		{
+			dblCostOfItemsTaxedAtDefaultTaxRate = parseFloat(document.getElementById('OriginalNetTaxedAt'+(dblTax*100).toFixed(2)).value);
+			dblTaxCost = dblTax * (dblFreight + dblHandling + dblCostOfItemsTaxedAtDefaultTaxRate)
+			document.getElementById('NetTaxedAt'+(dblTax*100).toFixed(2)).innerHTML = localizeNumber((dblFreight + dblHandling + dblCostOfItemsTaxedAtDefaultTaxRate).toFixed(2));
+			document.getElementById('hidNetTaxedAt'+(dblTax*100).toFixed(2)).value = (dblFreight + dblHandling + dblCostOfItemsTaxedAtDefaultTaxRate).toFixed(2);
+			document.getElementById('TaxAt'+(dblTax*100).toFixed(2)).innerHTML = localizeNumber(dblTaxCost.toFixed(2));
+		} else {
+			if (document.getElementById('OriginalNetTaxedAt0.00'))
+				{
+				dblCostOfItemsTaxedAtDefaultTaxRate = parseFloat(document.getElementById('OriginalNetTaxedAt0.00').value);
+				document.getElementById('NetTaxedAt0.00').innerHTML = localizeNumber((dblFreight + dblHandling + dblCostOfItemsTaxedAtDefaultTaxRate).toFixed(2));
+				document.getElementById('hidNetTaxedAt0.00').value = (dblFreight + dblHandling + dblCostOfItemsTaxedAtDefaultTaxRate).toFixed(2);
+				dblTaxCost = dblTax * dblCostOfItemsTaxedAtDefaultTaxRate;
+				}
+		}	
+		
+	}
+<!--/TAXJavascript-->
+	dblTaxCost =  parseFloat(dblTaxCost.toFixed(2));
+	if (!(IsDisplayTaxRatesAppliedAtTheCart()))
+	{  //No Display Tax Rates Applied at the Cart
+		document.getElementById('hidtotal').value = (dblTaxCost + (dblCostOfItems + dblFreight + dblHandling)).toFixed(2);
+		document.getElementById('total').innerHTML = strCurrencySymbol + localizeNumber(document.getElementById('hidtotal').value);
+	} else
+	{//Display Tax Rates Applied at the Cart
+		document.getElementById('hidtotal').value = (dblCostOfItemsPlusTax + dblTaxCost + dblFreight + dblHandling - (dblCostOfItemsTaxedAtDefaultTaxRate*dblTax)).toFixed(2);
+		document.getElementById('total').innerHTML = strCurrencySymbol + localizeNumber(document.getElementById('hidtotal').value);
+	}
+	CalculateTotalWithVouchers();
+<!--/FREIGHTJavascript-->
+	
+	if (!isEmpty(intIndex))
+	{
+		if (intIndex!='')
+		{
+			CalculateBudget(true, true);
+		} else {
+			CalculateBudget(false, true);
+		}
+	}
+<!--/COST-->
+}
+
+function localizeNumber(strNumber) {return lfFormatNumber(strNumber, '{DPSep}', '{ThSep}')}
+
+function ValidData()
+{
+	<!--AdditionalEmailAddressRequired-->
+	<!--DeliveryAddressLogic-->
+	<!--PONumberLogic-->
+	<!--ExtraInfoLogic-->
+	if (!validateBudget()) return false;
+	if (!hasApproverEmail()) return false;
+	EnableFields();
+	
+	return true;
+}
+	
+	<!--ExtraInfoFunctions-->
+	
+function EnableFields()
+{
+	var objElements;
+	var i;
+
+	objElements = document.getElementsByTagName("input");
+
+	for (i=0;i<objElements.length;i++)
+	{
+		if (objElements[i].disabled){objElements[i].value = "";}
+		objElements[i].disabled = false;
+	}
+	
+	objElements = document.getElementsByTagName("select");
+	for (i=0;i<objElements.length;i++)
+	{
+		if (objElements[i].disabled){objElements[i].selectedIndex = "0";}
+		objElements[i].disabled = false;
+	}
+}
+
+
+function CheckEntry(ctrlCur, strCaption, blnRequired, strLength, strType, strErrorMessage)
+{
+	var strTempMsg = strErrorMessage;
+	
+	if ((isWhitespace(document.Form1.elements[ctrlCur].value)) && blnRequired)
+	{
+		if (strTempMsg != ''){
+			alert(strTempMsg);
+		}
+		else{
+			alert('You must enter a value for ' + strCaption);
+		}
+		
+		document.Form1.elements[ctrlCur].focus();
+		return false;
+	}
+
+
+
+	if (strLength != '')
+	{
+
+		var intLen = parseInt(strLength);
+
+		if (intLen != 0)
+		{
+			if ((document.Form1.elements[ctrlCur].value.length != intLen) && (strType == 'exactly'))
+			{
+				if ((blnRequired == false) && (document.Form1.elements[ctrlCur].value.length==0))return true;
+				if (strErrorMessage == ''){strTempMsg='Please enter ' + strLength + ' characters for ' + strCaption}
+				alert(strTempMsg);
+				return false;
+			}
+
+			if ((document.Form1.elements[ctrlCur].value.length < intLen) && (strType == 'at least'))
+			{
+				if ((blnRequired == false) && (document.Form1.elements[ctrlCur].value.length==0))return true;
+				if (strErrorMessage == ''){strTempMsg='Please enter at least ' + strLength + ' characters for ' + strCaption}
+				alert(strTempMsg);
+				return false;
+			}
+
+			if ((document.Form1.elements[ctrlCur].value.length > intLen) && (strType == 'at most'))
+			{
+				if ((blnRequired == false) && (document.Form1.elements[ctrlCur].value.length==0))return true;
+				if (strErrorMessage == ''){strTempMsg='Please enter at most ' + strLength + ' characters for ' + strCaption + '\n(You have entered ' + document.Form1.elements[ctrlCur].value.length + ' characters)'}
+				alert(strTempMsg);
+				return false;
+			}
+		}
+	}
+
+	
+	return true;
+}
+
+
+
+function isWhitespace (strCurrent)
+
+{   var i;
+	var whitespace = " \t\n\r";
+	
+    if (isEmpty(strCurrent)) return true;
+
+    for (i = 0; i < strCurrent.length; i++)
+    {   
+        var c = strCurrent.charAt(i);
+
+        if (whitespace.indexOf(c) == -1) return false;
+    }
+    
+    return true;
+}
+
+function isEmpty(strCurrent)
+{  
+	return ((strCurrent == null) || (strCurrent.length == 0))
+}
+
+function TogglePONumber(invoiceOnly)
+{
+	var dblAmountBudgetPayment;
+	if(invoiceOnly)
+	{	
+		if((eval(document.Form1.PaymentType)) && (document.getElementById('ponumberbox')))
+		{
+			if(document.Form1.elements['PaymentType'].options[document.Form1.elements['PaymentType'].selectedIndex].value=="Invoice")
+			{
+				document.getElementById('ponumberbox').style.display = "";
+			} else
+			{
+				document.getElementById('ponumberbox').style.display = "none";
+				document.Form1.elements['PONumber'].value = "";
+			}
+		}
+		if ((document.getElementById('budgettotal')) && (document.getElementById('ponumberbox')))
+		{
+			dblAmountBudgetPayment = document.getElementById('budgettotal').innerHTML.replace(strCurrencySymbol, '').replace( '{LocalThSymbol}', '').replace('{LocalDPSymbol}', '.');
+			if (dblAmountBudgetPayment>0)
+			{
+				document.getElementById('ponumberbox').style.display = "none";
+				document.Form1.elements['PONumber'].value = "";
+			}
+			else
+			{
+				if (document.getElementById('trPaymentType'))
+				{
+					document.getElementById('ponumberbox').style.display = "";
+					document.getElementById('trPaymentType').style.display = "none";
+					
+				}
+			}
+			
+			
+		}
+	}
+}
+
+function CheckApproverEmail()
+{
+	var strValue = document.Form1.elements['preapprovalselect'].value;
+	var strDisplay = '';
+
+	if (strValue.length > 0)
+	{
+		if (strValue.charAt(0) != '@')strDisplay = 'none'
+	}
+
+	document.Form1.elements['preapproval'].style.display = strDisplay;
+}
+
+
+function hasApproverEmail()
+{
+	var blnCheckEmail = false;
+	var strEmail = '';
+
+	if(document.getElementById('preapproval') != null)
+	{
+		blnCheckEmail = true
+		strEmail = document.getElementById('preapproval').value;
+	}
+
+	if(document.getElementById('preapprovalselect') != null)
+	{
+		blnCheckEmail = true;
+		if (document.getElementById('preapprovalselect').value.length > 0)
+		{
+			if (document.getElementById('preapprovalselect').value.charAt(0) != '@')strEmail = '';
+		}
+
+		strEmail += document.getElementById('preapprovalselect').value;
+
+	}
+
+	if(blnCheckEmail)
+	{
+
+
+		if (! isEmail(strEmail, false))
+		{
+			alert('Please enter an approver\'s email address');
+			return false
+		}
+		
+	}
+	return true;
+
+}
+
+function isEmail (s)
+{   if (isWhitespace(s)) 
+       if (isEmail.arguments.length == 1) return false;
+       else return (isEmail.arguments[1] == true);
+   
+    if (isWhitespace(s)) return false;
+    var i = 1;
+    var sLength = s.length;
+    
+    while ((i < sLength) && (s.charAt(i) != "@")) {i++}
+
+    if ((i >= sLength) || (s.charAt(i) != "@")) return false;
+    else i += 2;
+
+    // look for .
+    while ((i < sLength) && (s.charAt(i) != "."))
+    { i++
+    }
+    if ((i >= sLength - 1) || (s.charAt(i) != ".")) return false;
+    else return true;
+}
+
+
+function CalculateBudget(blnFirst, blnFromFreight)
+{
+<!--CalculateBudget-->
+	var blnCost = false;
+
+	<!--COST-->
+	blnCost = true;
+	<!--/COST-->
+	CalculateBudgets(blnFirst, blnFromFreight, blnCost, strCurrencySymbol, '{LocalThSymbol}', '{LocalDPSymbol}','{availablebalance}', '{allowancetime}')
+
+<!--/CalculateBudget-->
+}
+
+function isNumberKey(evt)
+{
+  //return amt.match(/^\d*(.\d{0,2})?$/);
+  var charCode = (evt.which) ? evt.which : evt.keyCode
+  if (charCode != 46 && charCode > 31 
+	&& (charCode < 48 || charCode > 57))
+	 return false;
+
+  return true;
+}
+
+function validAmount(amt)
+{
+    return amt.match(/^\d*(.\d{0,2})?$/);
+}
+ 
+function validateBudget()
+{
+	if(document.getElementById('BudgetEdit') != null)
+	{
+		if(!validAmount(document.getElementById('BudgetEdit').value))
+		{
+			alert('You must enter a valid amount.');
+			document.getElementById('BudgetEdit').value='0.00';
+			document.getElementById('BudgetEdit').select();
+			document.getElementById('BudgetEdit').focus();
+			return false;
+		}
+		if(document.getElementById('BudgetEdit').value=='') {
+			document.getElementById('BudgetEdit').value = '0.00';
+		} else {
+			document.getElementById('BudgetEdit').value = parseFloat(document.getElementById('BudgetEdit').value).toFixed(2);
+		}
+		CalculateBudget(false, false);
+	}
+	return true;
+}
+
+function EIFGroupClicked(strVal)
+{
+	var aryGroups;
+	var iCntr=0;
+	var children;
+	var i;
+	var strGNList=document.getElementById('EIFGroupNameList').value;
+	
+	if(strVal == '')
+	{
+		for (i=0;i<document.Form1.eifgroup.length;i++) 
+		{
+			  if (document.Form1.eifgroup[i].checked) 
+			  { 
+					 strVal = document.Form1.eifgroup[i].value; 
+			  } 
+		}
+		if (strVal == '')
+		{
+			document.Form1.eifgroup[0].checked = true;
+			strVal = document.Form1.eifgroup[0].value;
+		}
+	}
+
+	aryGroups = strGNList.split("|");
+	for (iCntr=0;iCntr<aryGroups.length;iCntr++)
+	{
+		children = document.getElementById('div' + aryGroups[iCntr]).getElementsByTagName('*');
+		for (i=0;i<children.length;i++)
+		{
+				if(children[i].type=="text" || children[i].type=="select-one")
+				{
+					children[i].disabled = true;
+				}
+		}
+
+		children = document.getElementsByName("GroupItem" + aryGroups[iCntr]);
+
+		for (i=0;i<children.length;i++)
+		{
+			setOpacity(50, children[i]);
+		}
+	}
+	
+	
+	
+	children = document.getElementById('div' + strVal).getElementsByTagName('*');
+	for (i=0;i<children.length;i++)
+	{
+		children[i].disabled = false;
+		setOpacity(100, children[i]);
+	}
+}
+
+function setOpacity(opacity, objObject)
+{
+	// IE/Win
+	objObject.style.filter = "alpha(opacity:"+opacity+")";
+	objObject.style.zoom = 1;
+	
+	// Safari<1.2, Konqueror
+	objObject.style.KHTMLOpacity = opacity/100;
+  
+	// Older Mozilla and Firefox
+	objObject.style.MozOpacity = opacity/100;
+  
+	// Safari 1.2, newer Firefox and Mozilla, CSS3
+	objObject.style.opacity = opacity/100;
+}
+
+	function functionOnLoad(){
+		setup();
+	}
+
+	function CheckBudgetCookie() {
+		var nameEQ = 'opsbudget' + "=";
+		var ca = document.cookie.split(';');
+		for(var i=0;i < ca.length;i++) {
+			var c = ca[i];
+			while (c.charAt(0)==' ') c = c.substring(1,c.length);
+			if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+		}
+		return 'noinfo';
+	}
+</SCRIPT>
+</head>
+<!--TabTableStart-->
+<!--ORDERS-->
+<div class="pg-c-checkout--page">
+    <form class="pg-c-checkout--form" action="Checkout.asp" method="post" name="Form1" onSubmit="return ValidData()">
+        <input type="hidden" name="cc" value="{CC}">
+
+        <!--Budget-->
+        <table border="0" cellpadding="2" cellspacing="0" width=400px class=wrapper>
+            <tr style='display:none' id="budgetallowance">
+                <td valign="top" nowrap>{AllowanceCaption}:&nbsp;</td>
+                <td width=100%>{allowance} {allowancetime}</td>
+            </tr>
+            <tr style='display:none' id="budgetcurrent">
+                <td valign="top" nowrap>{CurrentBalanceCaption}:</td>
+                <td width=100%>{balance}</td>
+            </tr>
+            <tr style='display:none' id="budgetavailable">
+                <td valign="top" nowrap>{AvailableBalanceCaption}:</td>
+                <td width=100%>{availablebalance}<br></td>
+            </tr>
+            <!--BudgetAllocation-->
+            <!--BudgetEdit-->
+            <tr>
+                <td nowrap><b>{AllocatedToBudgetCaption}</b></td>
+                <td>{CurrencySymbol}<input type="text" name="BudgetEdit" id="BudgetEdit" value="" onkeypress="return isNumberKey(event)" onblur="validateBudget();" size=8>
+                    <!--/BudgetEdit--><!--/BudgetAllocation-->
+                </td>
+            </tr>
+            <tr>
+                <td valign="top" colspan=2>
+                    <font color=#ff0000><span id=spanbalance></span></font><br><br>
+                </td>
+            </tr>
+        </table>
+        <!--/Budget-->
+
+        <div class="pg-c-checkout">
+            <!--DeliveryDetails-->
+            <div class="pg-c-checkout--details">
+                <div class="pg-c-checkout--details-user">
+                    <h1 class="pg-c-checkout--details-title">{OrderedByCaption}</h1>
+                    <p class="pg-c-checkout--details-user-info">{OrderDetails}</p>
+                </div>
+                <div class="pg-c-checkout--details-address">
+                    <h1 class="pg-c-checkout--details-title">{DeliverToCaption}</h1>
+                    <p class="pg-c-checkout--details-address-info">{DeliveryAddress}</p>
+                </div>
+                <!--BillingColumn-->
+                <div class="pg-c-checkout--details-billing">
+                    <h1 class="pg-c-checkout--details-title">{BillToCaption}</h1>
+                    <p class="pg-c-checkout--details-address-info">{BillingAddress}</p>
+                </div>
+                <!--/BillingColumn-->
+            </div>
+            <!--/DeliveryDetails-->
+
+            <table class="pg-c-checkout--table">
+                <thead>
+                    <tr>
+                        <th>{OrderNumberCaption}</th>
+                        <th>{DateCaption}</th>
+                        <th>{QuantityCaption}</th>
+                        <th>{OrderNameCaption}</th>
+                        <th>{ProductNameCaption}</th>
+                        <!--COST-->
+                        <th>{CostCaption}</th>
+                        <!--/COST-->
+                        <!--Delivery-->
+                        <th>{DeliveryCaption}</th>
+                        <!--/Delivery-->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--ROW-->
+                    <tr>
+                        <td id="firstcolumn" class="datatd">{OrderNumber}</TD>
+                        <td class="datatd">{Date}</TD>
+                        <td class="datatd">{Quantity}</TD>
+                        <td class="datatd">{EmpName}</TD>
+                        <td class="datatd" nowrap>{TemplateName}</TD>
+                        <!--COST--><td class="datatd" id=lastcolumn align="right">{Discount{Order_Id}} {Cost}</TD><!--/COST-->
+                        <!--Delivery--><td class="datatd" nowrap>{Address}</TD><!--/Delivery-->
+                        </td>
+                    </tr>
+
+                    <!--Postage-->
+                    <tr>
+                        <td id="firstcolumn" class="datatd"></td>
+                        <td class="datatd"></td>
+                        <td class="datatd"></td>
+                        <td class="datatd" colspan="2" align="right">{PostageCaption}</td>
+                        <!--COST--><td class="datatd" id=lastcolumn align="right">{Postage}</td><!--/COST-->
+                        <!--Delivery--><td class="datatd"></td><!--/Delivery-->
+                    </tr>
+                    <!--/Postage-->
+
+                    <!--PurchaseListPrice-->
+                    <tr>
+                        <td id=firstcolumn class="datatd"></td>
+                        <td class="datatd"></td>
+                        <td class="datatd"></td>
+                        <td class="datatd" colspan="2" align="right">{PurchaseListPriceCaption}</td>
+                        <!--COST--><td class="datatd" id=lastcolumn align="right">{PurchaseListPrice}</td><!--/COST-->
+                        <!--Delivery--><td class="datatd"></td><!--/Delivery-->
+                    </tr>
+                    <!--/PurchaseListPrice-->
+                    <!--/ROW-->
+
+                    <!--COST-->
+                    <TR><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b>{CostOfItemsCaption}</b></TD><td class="DataTD" id="lastcolumn" align="right"><b>{totalcost}</b></TD></TR>			  
+                    <!--HANDLING--><TR class="{ShowHideHandling}"><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b>{HandlingCaption}</b></TD><td class="DataTD" id="lastcolumn" align="right"><span id=handlingcost>{handling}</span></TD></TR><!--/HANDLING-->
+                    <!--FREIGHT--><TR class="{ShowHideFreight}"><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b>{FreightCaption}</b></TD><td class="DataTD" id="lastcolumn" align="right"><span id=freightcost>{freight}</span></TD></TR><!--/FREIGHT-->
+                    <!--FREIGHTHANDLING--><TR class="{ShowHideFreightHandling}"><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b>{FreightCaption}</b></TD><td class="DataTD" id="lastcolumn" align="right"><span id=freighthandlingcost>{freighthandling}</span></TD></TR><!--/FREIGHTHANDLING-->
+                    <!--DISCOUNT--><TR><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b><font color=ff0000>* {GroupDiscountCaption}</font></b></TD><td class="DataTD" id="lastcolumn" align="right"><span><font color=ff0000>-{DiscountPrice}</font></span></TD></TR><!--/DISCOUNT-->
+                    <!--TAX--><TR><td class="subtotalrow" id="firstcolumn" colspan="5" align="right"><b>{TotalExTaxCaption}</b></TD><td class="subtotalrow" id="lastcolumn" align="right"><b><span id=subtotal>{subtotal}</span></b></TD></TR>
+                    <TR><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b>{TaxLabel}</b></TD><td class="DataTD" id="lastcolumn" align="right"><span id=tax>{tax}</span></TD></TR><!--/TAX-->
+                    <!--DETAILEDTAXES--><TR><td class="DataTD" id="firstcolumn" colspan="5" align="right"><b><!--DETAILEDTAXES_NO_TAXED-->{NoCaption} {TaxLabel}<!--/DETAILEDTAXES_NO_TAXED--><!--DETAILEDTAXES_TAXED-->{TaxLabel} {AtCaption} {TaxRate}%<!--/DETAILEDTAXES_TAXED--></b> ({BaseCaption} {CurrencySymbol}<span id='NetTaxedAt{TaxRateNeutralFormat}'>{NetTaxed}</span>)</TD><td class="DataTD" id="lastcolumn" align="right"><b>{CurrencySymbol}<span id='TaxAt{TaxRateNeutralFormat}'>{tax}</span></b></TD><input type="hidden" id='OriginalNetTaxedAt{TaxRateNeutralFormat}' value="{NetTaxedNeutralFormat}"><input type="hidden" id='hidNetTaxedAt{TaxRateNeutralFormat}' name='hidNetTaxedAt{TaxRateNeutralFormat}' value="{NetTaxedNeutralFormat}"></TR><!--/DETAILEDTAXES-->
+                    <TR><td class="totalrow" id="firstcolumn" colspan="5" align="right"><b>{TotalItemCostCaption}</b></TD><td class="totalrow" id="lastcolumn" align="right"><b><span id=total>{total}</span><input type="hidden" id='hidtotal' name='hidtotal' value="{totalNeutralFormat}"/></b></b></TD></TR>
+                    <!--VOUCHER--><TR id="voucherrow" class="Hide"><td id="firstcolumn" class="DataTD" colspan="5" align="right"><b>{VoucherCaption} {VoucherName}</b> <a href="javascript:RemoveVoucher('{VoucherRowNumber}');"><img src="images/delete.gif" border="0" title="{DeleteVoucherButtonCaption}" style="vertical-align:middle"></a></TD><td id="lastcolumn" class="DataTD" align="right">{VoucherAmount}<input type=hidden name="VoucherIds" value="{VoucherId}"></TD></TR><!--/VOUCHER-->
+                    <TR id="totaltopayrow" class="Hide"><td id="firstcolumn" class="totalrow" colspan="5" align="right"><b>{TotalToPayCaption}</b></TD><td class="totalrow" id="lastcolumn" align="right"><b><span id=totaltopay>{total}</span></b><input type="hidden" id='hidtotaltopay' name='hidtotaltopay' value="{totalNeutralFormat}"/></TD></TR>
+                    <!--BudgetTotals-->
+                    <!--BudgetAllocation--><TR><td class="totalrow" id="firstcolumn" colspan="5" align="right"><b>{AllocatedToBudgetCaption}</b></TD><td class="totalrow" id="lastcolumn" align="right"><b><!--BudgetDisplay--><span id=spnbudgetamount>{BudgetAllocated}</span><!--/BudgetDisplay--><!--BudgetEdit--><span id=spnBudgetEdit name=spnBudgetEdit></span><!--/BudgetEdit--></b></b></TD></TR><!--/BudgetAllocation-->
+                    <!--BudgetAllocation--><TR><td class="subtotalrow" id="firstcolumn" colspan="5" align="right"><b>{TotalToPayCaption}</b></TD><td class="subtotalrow" id="lastcolumn" align="right"><b><span id=budgettotal>{budgettotaltopay}</span></b></b></TD></TR><!--/BudgetAllocation-->
+                    <!--/BudgetTotals-->
+                    <!--/COST-->
+                </tbody>
+            </table>
+
+            <!--VOUCHER-->
+            <div class="pg-c-checkout--voucher">
+                <a href='' onclick="this.href='VoucherLookup.aspx?{opssess}&maxamount=' + GetTotalToPay() + ''; return hs.htmlExpand(this, { outlineType: 'rounded-white',
+                wrapperClassName: 'highslide-wrapper', objectType: 'iframe', preserveContent: false, width:500, height:400} )"><input type="button" class="pg-c-button pg-c-button--primary" value='{VoucherApplyButtonCaption}'></a>
+            </div>
+            <!--/VOUCHER-->
+
+            <!--OrderDetails-->
+            <div class="pg-c-checkout--order-details">
+                <h1 class="pg-c-checkout--order-details-title">{OrderDetailsHeading}</h1>
+                
+                <!--ExtraInfos-->
+                <div class="pg-c-checkout--order-details-field">
+                    <label for="">{ExtraInfoCaption}</label>
+                    {ExtraInfoField}
+                </div>
+                <!--/ExtraInfos-->
+            </div>
+
+            <!--ExtraInfoGroup-->
+            <div class="pg-c-checkout--extra-info-group" id="div{GroupName}">
+                <!--ExtraInfoGroupSelect-->
+                <input type="radio" name="eifgroup" value="{GroupName}" onClick="EIFGroupClicked(this.value)" {GroupSelected}>
+                <!--/ExtraInfoGroupSelect-->
+                {GroupName}
+
+                <!--ExtraInfosGroup-->
+                <div class="pg-c-checkout--extra-info-group-field">
+                    <div name="GroupItem{GroupName}" id="GroupItem{GroupName}" width=100%>
+                        <label for="">{ExtraInfoCaption}</label>
+                    </div>
+                    <div name="GroupItem{GroupName}" id="GroupItem{GroupName}" width=100%>
+                        {ExtraInfoField}
+                    </div>
+                </div>
+                <!--/ExtraInfosGroup-->
+            </div>
+            <!--/ExtraInfoGroup-->
+
+            <!--PaymentType-->
+            <div class="pg-c-checkout--payment-type" id="trPaymentType">
+                <div class="pg-c-checkout--payment-type-field">
+                    <label for="PaymentType">{PaymentTypeCaption}</label>
+                    <SELECT name="PaymentType" onChange="if (typeof TogglePONumber =='function') {TogglePONumber({invoiceOnly})};">
+                        <!--PaymentTypeOption--><OPTION VALUE="{PaymentTypeValue}">{PaymentTypeLabel}</OPTION><!--/PaymentTypeOption-->
+                    </SELECT>
+                </div>
+            </div>
+            <!--/PaymentType-->
+
+            <!--PONumber-->
+            <div class="pg-c-checkout--ponumber" id="ponumberbox">
+                <label for="PONumber">{PONumberCaption}</label>
+                <input type="text" value="{PONumber}" name="PONumber" class="TextBoxText" size="20">
+            </div>
+            <!--/PONumber-->
+
+            <!--PreApproval-->
+            <div class="pg-c-checkout--preapproval">
+                <label for="">{ApproverEmailCaption}</label>
+                {PreApproval}
+            </div>
+            <!--/PreApproval-->
+        </div>
+        <!--/OrderDetails-->
+
+        <!--AdditionalConfirmationEmail-->
+        <TABLE width="100%" border="0" cellpadding="0" cellspacing="0" class=bordertable>
+            <tr><td colspan=2 class=bordertableheader><b>{AdditionalConfirmationEmailHeading}</b></td></tr>
+            <!--AdditionalEmailAddress--><tr>
+                <td class="TextBoxText" nowrap>{EnterEmailCaption}</td>
+                <td class="TextBoxText" width="100%"><input type=text size=50 name=AdditionalEmailAddress id=AdditionalEmailAddress value="{AdditionalEmailAddress}"></td>
+            </tr><!--/AdditionalEmailAddress-->
+            <!--EmailShippingNotification--><tr>
+                <td class="TextBoxText" nowrap>{EnterEmailShippingNotificationCaption}</td>
+                <td class="TextBoxText" width="100%"><input type=text size=50 name=EmailShippingNotification id=EmailShippingNotification value=""></td>
+            </tr><!--/EmailShippingNotification-->
+        </TABLE>
+        <!--/AdditionalConfirmationEmail-->
+
+        <div class="pg-c-checkout--freight">
+            {freightoptions}
+        </div>
+
+        <input type=hidden id="EIFGroupNameList" value="{EIFGroupNameList}">
+        <input type=hidden name="freightTaxRateOnFreight" value="{freightTaxRateOnFreight}">
+        <input type=hidden name=DeliveryAddress value="{DA}">
+        <input type=hidden name=Address1 value="{DA1}">
+        <input type=hidden name=Address2 value="{DA2}">
+        <input type=hidden name=Address3 value="{DA3}">
+        <input type=hidden name=Address4 value="{DA4}">
+        <input type=hidden name=Suburb value="{DASuburb}">
+        <input type=hidden name=State value="{DAState}">
+        <input type=hidden name=Postcode value="{DAPostcode}">
+        <input type=hidden name=Country value="{DACountry}">
+        <input type=hidden name=AttentionTo value="{DAAttention}">
+        <input type=hidden name=AddressCompany value="{DAAddressCompany}">
+        <input type=hidden name=AddressPhoneNumber value="{DAAddressPhoneNumber}">
+
+        <input type=hidden name=BillingAddress value="{BA}">
+        <input type=hidden name=BillingAddress1 value="{BA1}">
+        <input type=hidden name=BillingAddress2 value="{BA2}">
+        <input type=hidden name=BillingAddress3 value="{BA3}">
+        <input type=hidden name=BillingAddress4 value="{BA4}">
+        <input type=hidden name=BillingSuburb value="{BASuburb}">
+        <input type=hidden name=BillingState value="{BAState}">
+        <input type=hidden name=BillingPostcode value="{BAPostcode}">
+        <input type=hidden name=BillingCountry value="{BACountry}">
+
+        <p>
+            <input type="hidden" name="orderids" value="{orderids}">
+            <input type="hidden" name="GroupDiscount" value="{GroupDiscount}">
+            <input type="hidden" name="BudgetAllocated" id="BudgetAllocated" value="">
+            <input type="hidden" name="BudgetToPay" id="BudgetToPay" value="">
+            <input type="hidden" name="HasBudget" id="HasBudget" value="{HasBudget}">
+            <input type="hidden" name="HasBudgetExcess" id="HasBudgetExcess" value="{HasBudgetExcess}">
+            <input type="hidden" name="HasBudgetExcessEdit" id="HasBudgetExcessEdit" value="{HasBudgetExcessEdit}">
+            <input type="hidden" name="BudgetSetAmt" id="BudgetSetAmt" value="">
+            <input type="hidden" name="VouchersUsed" id="VouchersUsed" value="">
+            <div class="pg-c-checkout--actions">
+                <input type="button" value="{ButtonReturnToCartCaption}" class="pg-c-button pg-c-button--cancel" onClick="javascript:history.go(-1)">
+                <!--OrderButton-->
+                <input type="submit" value="{ButtonSubmitOrderCaption}" id="btnFinal" name="btnFinal" class="pg-c-button pg-c-button--primary" onClick="return CheckLiveStock();" style='display:{orderdisplay}'>
+                <!--/OrderButton-->
+            </div>
+        </p>
+    </form>
+</div>
+
+		<Script>if (typeof CalculateBudget =='function') {CalculateBudget(true, false)};</Script>
+		<Script>RenderVouchers();</Script>
+
+<!--/ORDERS-->
+<!--TabTableEnd-->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="Files/BrokerBranding/capstone/Include/checkout.js"></script>

@@ -1,0 +1,368 @@
+<link rel="stylesheet" href="Files/BrokerBranding/capstone/Include/drift.css"></style>
+<link href="https://unpkg.com/ispin/dist/ispin.css" rel="stylesheet">
+<script type="text/javascript" src="Include/highslide.js"></script>
+<script type="text/javascript" src="Include/highslide.cfg.js"></script>
+<!--CKeditor-->
+<script type='text/javascript' src='Include/ckeditor/ckeditor.js?4'></script>
+<!--/CKeditor-->
+<!--redactor-->
+<script src="JSCheck/Include.js" type="text/javascript" language="javascript1.1"></script>
+<script SRC="include/validation.js" ID="clientEventHandlersJS" LANGUAGE="javascript"></script>
+<script src="include/ajax.js"></script>
+<script type="text/javascript" language="javascript">
+
+	function showSave(blnShow)
+	{
+		var strDisplay='none';
+
+		if (document.getElementById('chkSave'))
+		{
+			if (document.getElementById('chkSave').checked)strDisplay='';
+			document.getElementById('spnSave').style.display=strDisplay;			
+		}
+	}
+        
+    function functionOnLoad(){
+	    var blnValidateLoad;
+		showSave(false);
+		loadSelectImages();
+		blnValidateLoad = validateLoad();
+		if (document.getElementById('btnPreview') != undefined) RefreshProof();
+		return blnValidateLoad;
+	}
+
+	function validateField(curInput)
+	{
+	  <!--validateField-->
+	  <!--visibleField-->
+	}
+	
+	function loadSelectImages(){
+		var strFieldName = "";
+		var intCount = 1;
+		var intPos; 
+		var intCurrentFieldId;
+		var intPreviousFieldId;
+		var elem = document.getElementById("Form1").elements;
+		for(var i = 0; i < elem.length; i++){
+			strFieldName = "" + elem[i].name + "";
+			intPos=strFieldName.indexOf('pdfs_id');
+			if (intPos > -1)
+			{
+				intCurrentFieldId = strFieldName.substring(intPos+7, strFieldName.length);
+			}
+			if (intCurrentFieldId != intPreviousFieldId){
+				if(elem[i].value != '' && elem[i].type != "hidden"){
+					ShowThumb(elem[i], intCount);
+				}
+				intCount++;
+				intPreviousFieldId = intCurrentFieldId;
+			}
+		}
+	}
+
+	function validateForm()
+	{
+		var blnOverwrite = false;
+		var blnOWOK = false
+	<!--validateSubmit-->
+	<!--validateForm-->
+		if (document.getElementById('chkSave'))
+		{
+			if (document.getElementById('chkSave').checked)
+			{
+				
+				if(document.getElementById('chkSave').checked) 
+				{
+
+					if(document.getElementById('rdoSaveOver'))
+					{
+						if (document.getElementById('rdoSaveOver').checked)
+						{
+							blnOverwrite = true;
+							if (document.getElementById('cboSaveOver').value != '')blnOWOK = true;
+						}
+					}
+					if (blnOverwrite)
+					{
+						if (blnOWOK)
+						{
+							return true;
+						}
+						else
+						{
+							alert('Please select a previously saved item to overwrite. Otherwise, choose the \'Save As\' option above and enter a new name');
+							return false;
+						}
+					}
+					else
+					{
+						if (document.getElementById('txtSaveAs').value =='')
+						{
+							alert('Please enter a name to save your template\'s data as');
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	function hasValue(strName)
+	{
+	<!--hasvalue-->
+		return true;
+	}
+
+	function validateLoad()
+	{
+	<!--validateLoad-->
+		return true;
+	}
+
+	function ShowThumb(cboxCur, intIndex)
+	{
+	<!--ImageJava-->
+	}
+	function SpellWindow(strFieldName){
+	  var oSpell = new JavaScriptSpellCheck();
+	  oSpell.spellCheckWindow(strFieldName);
+	}
+
+	function limitText(limitField, limitNum) {
+		if (limitField.value.length > limitNum) {
+			limitField.value = limitField.value.substring(0, limitNum);
+			document.getElementById(limitField.id + "MaxChars").innerHTML = '<br>{JSMaxCharsCaption}';
+		
+		}
+			else{
+					document.getElementById(limitField.id + "MaxChars").innerHTML = "";
+			}
+	}
+
+	function PartialEscape (strInput)
+	{	var strTemp;
+		strTemp = strInput.replace(/%/g,'%25'); 
+		strTemp = strTemp.replace(/(\r\n|[\r\n])/g,'%0D%0A'); //Escape carrage returns - line feeds 
+		strTemp = strTemp.replace(/&/g,'%26');  
+		strTemp = strTemp.replace(/\+/g,'%2B');  
+		strTemp = strTemp.replace(/ /g,'%20');  
+		return strTemp;
+	}
+
+	function RefreshProof() 
+	{
+		 var strURL = '';
+		 for(var i=0; i < document.getElementById('Form1').elements.length; i++)
+		  {
+		  if (i != 0) strURL += '&';
+		  if (document.getElementById('Form1').elements[i].name!='chkSave') strURL += document.getElementById('Form1').elements[i].name + '=' + PartialEscape(document.getElementById('Form1').elements[i].value);
+		  }
+		document.getElementById("spnLiveProof").innerHTML="<img src='images/process.gif' width=20>";
+		document.getElementById("btnPreview").style.display='none';
+		if(!AjaxPost("ShowProofAJAX.asp?type=refreshproof",stateChanged,strURL,false ))
+		{
+			document.getElementById("spnLiveProof").innerHTML = "Browser doesn't support AJAX";
+		}
+		else
+		{
+			document.getElementById("spnLiveProof").innerHTML='';
+			document.getElementById("btnPreview").style.display='';
+		}  
+		getProofs(xmlHttp.responseText)
+		if (document.PreviewHsRegistration != undefined) PreviewHsRegistration();
+
+	}
+	
+	function getProofs(strText)
+	{
+		var aryProofs = strText.split('<!--split-->');
+		if (document.getElementById('spnPDFProof'))document.getElementById('spnPDFProof').innerHTML = aryProofs[0];
+		
+		if ((document.getElementById('spnFrontProof')) && (aryProofs.length > 1))document.getElementById('spnFrontProof').innerHTML = aryProofs[1];
+		if ((document.getElementById('spnBackProof')) && (aryProofs.length > 2))document.getElementById('spnBackProof').innerHTML = aryProofs[2];
+	}
+	
+	
+	function stateChanged() {};
+
+	function openWin(strURL)
+	{
+		var winCurrent
+		winCurrent = window.open(strURL, "", "width=600,height=400,toolbar=0,status=0,location=0,menubar=0,scrollbars=0,resizable=1");
+		winCurrent.focus(); 
+	}
+</script>
+<script src="jswrapper.asp?file=enterdetailsval&screen=Image Library" id="clientEventHandlersJS" language="javascript"></script>
+
+
+	<form class="pg-c-product--form" name="Form1" id="Form1" action="Step3New.asp{params}" method="post" onSubmit="return validateForm()">
+		<input type="hidden" name="hidreturnto" id="hidreturnto" value="{returnto}">
+		<input type="hidden" name="webportalid" id="webportalid" value="{webportalid}">
+		<!--TabTableStart-->
+		<input type="hidden" class="textboxtext" Name="pid" size="5" value="{pid}">
+
+		<div class="pg-c-product">
+			<div class="pg-c-product--column">
+				<!--ProofRight-->
+				<div class="pg-c-product--proof">
+					<!--LiveProof-->
+					<span id="spnPDFProof" class="pg-c-product--proof-pdf"></span>
+					<!--/LiveProof-->
+
+					<span id="spnFrontProof" class="pg-c-product--proof-front">
+						<!--FrontThumb-->
+						{FrontThumb}{FrontTemplateName}
+						<!--/FrontThumb-->
+					</span>
+
+					<span id="spnBackProof" class="pg-c-product--proof-back">
+						<!--BackThumb-->
+						{BackThumb}{BackTemplateName}
+						<!--/BackThumb-->
+					</span>
+					
+					<!--LiveProof-->
+					<span id="spnLiveProof" class="pg-c-product--proof-live"></span>
+					<input type="button" value="{ButtonRefreshCaption}" name="btnPreview" id="btnPreview" onClick="return RefreshProof();">
+					<!--/LiveProof-->
+				</div>
+				<!--/ProofRight-->
+
+				<div class="pg-c-product--quantities">
+					<table class="pg-c-product--quantities-table">
+						<thead>
+							<tr>
+								<th>Size</th>
+								<th>Price</th>
+								<th>Quantity</th>
+							</tr>
+						</thead>
+						<tbody>
+
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="pg-c-product--column">
+
+				<div class="pg-c-product--image-zoom"></div>
+
+				<h1 class="pg-c-product--name">{Name}</h1>
+
+				<!--SavedTemplateData-->
+				<form name="frmPrevSaved" method="post">
+					<table class="wrapper">
+						<tr>
+							<td>
+								<input type=hidden name="oid" id="oid" value="{order}">
+								<b>{PreviouslySavedCaption}</b> 
+								<select onchange="if (this.value != '')submit()" name="cboSavedData" id="cboSavedData">
+									<option value="">{OptionPleaseSelectCaption}</option>
+									{PreviousSavedOptions}
+								</select>
+							</td>
+						</tr>
+					</table> 
+				</form>
+				<!--/SavedTemplateData-->
+
+				<!--Details-->
+				<!--HelpText-->
+				<blockquote class="pg-c-product--helptext">{HelpText}</blockquote>
+				<!--/HelpText-->
+
+				<!--FieldLayout-->
+				<div class="pg-c-product--field-layout">
+					<div class="pg-c-product--field-caption">
+						{FieldCaption}
+					</div>
+					<div class="pg-c-product--field">
+						{FieldCaptionOptions}{Field}
+						{FieldScreenTip}
+					</div>
+				</div>
+				<!--/FieldLayout-->
+				<!--/Details-->
+
+				<div class="pg-c-product--description">
+					<h1 class="pg-c-product--description-title">Product Description:</h1>
+
+					<ul class="pg-c-product--description-list">
+						
+					</ul>
+
+					<a href="" class="pg-c-product--specsheet" target="_blank">Specsheet/Size Chart</a>
+				</div>
+
+				<!--SaveTemplateData-->
+				<table>
+					<tr>
+						<td>&nbsp;</td>
+					</tr>
+					<tr>
+						<td class="labeltext" valign="top" colspan="2">
+							<b>
+								<input type="checkbox" name="chkSave" id="chkSave" onclick="showSave(true)"> {SaveTemplateDataCaption}
+							</b>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<table style="display:none" id="spnSave">
+								<tr>
+									<td>
+										<!--SavedTemplateData-->
+										<input type="radio" name="rdoSave"  id="rdoSaveAs" value="SaveAs" checked> 
+										<!--/SavedTemplateData-->
+										Save As: 
+									</td>
+									<td>
+										<input type="text" name="txtSaveAs" id="txtSaveAs"> 
+									</td>
+								</tr>
+								<!--SavedTemplateData-->
+								<tr>
+									<td>
+										<input type="radio" name="rdoSave" id="rdoSaveOver" value="Overwrite"> 
+										Overwrite: 
+									</td>
+									<td>
+										<select name="cboSaveOver" id="cboSaveOver">
+											<option value="">{OptionPleaseSelectCaption}</option>
+											{PreviousSavedOptions}
+										</select> 
+									</td>
+								</tr>
+								<!--/SavedTemplateData-->
+								<tr>
+									<td colspan="2">
+										<input type="checkbox" name="chkThis" id="chkThis"> 
+										{OptionThisTemplateCaption}
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				<!--/SaveTemplateData-->
+			</div>
+		</div>
+		<!--BUTTONS-->
+		<div class="pg-c-product--actions">
+			<input type="button" name="btnBack" class="pg-c-button pg-c-button--cancel" id="btnBack" value="{BackButtonCaption}" onClick="window.history.back()">
+			<input type="submit" name="btnSubmit" class="pg-c-button pg-c-button--primary pg-c-button--submit" value ="{NextButtonCaption}">
+		</div>
+		<!--/BUTTONS-->
+	</form>
+
+	<script src="Files/BrokerBranding/capstone/Include/drift.js"></script>
+	<script src="https://unpkg.com/ispin"></script>
+	<script src="Files/BrokerBranding/capstone/Include/product.js"></script>
+
+<!--TabTableEnd-->
+
+  	  

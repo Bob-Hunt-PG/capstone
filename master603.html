@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+        <!-- Meta -->
+        <meta charset="UTF-8">
+		<meta name="description" content="{metadescription}" />
+		<meta name="keywords" content="{metakeywords}" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta name="theme-color" content="#c25527"/>
+
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="Files/BrokerBranding/capstone/Include/favicon.ico" />
+
+        <!-- Priority Group CSS -->
+        <link rel="stylesheet" href="Files/BrokerBranding/capstone/Include/app.css">
+
+        <!-- Title -->
+        <title>Capstone Administrators</title>
+	</head>
+    <body onload="if (typeof functionOnLoad =='function')functionOnLoad();" class="{Title}">
+
+    <!-- <div class="alert" style="position: fixed; margin: 0 auto; bottom: 0; left: 0; right: 0; padding: 0.5rem 0.75rem; z-index: 999999; background: #e4e4e4; font-size: 0.75rem;">
+        <h4 style="margin: 0; display: inline; color: #ff0505; font-size: 0.75rem;">Please note:</h4> <p style="margin: 0; display: inline;"><b>due to the COVID-19, our apparel production may be delayed or require longer than usual production times. Our team will reach out ONLY if the order cannot be completed at this time.</b></p>
+    </div> -->
+
+        <!-- Header Navigation -->
+        <nav class="pg-c-navigation">
+
+            <input type="checkbox" name="pg-c-menu--mobile-check" class="pg-c-menu--mobile-check" id="pg-c-menu--mobile-check">
+            <div class="pg-c-navigation--main">
+
+                <!-- Left Navigation Bar --> <!-- Brand --> 
+                <div class="pg-c-brand pg-c-menu pg-c-menu--left">
+                    <img src="Files/BrokerBranding/capstone/Include/logo.png" alt="Capstone Administrators" class="pg-c-brand--logo">
+                </div>
+
+                <!--LoggedIn-->
+                <!-- Middle Navigation Bar --> <!-- Menu -->
+                <div class="pg-c-menu pg-c-menu--center">
+                    <ul class="pg-c-menu--list">
+                        <li class="pg-c-menu--list-item">
+                            <a href="/RetailSite.asp" class="pg-c-menu--link">Home</a>
+                        </li>
+                        <li class="pg-c-menu--list-item">
+                            <a href="/ProductCats.asp?cid=534" class="pg-c-menu--link">Shop</a>
+                        </li>
+                        <li class="pg-c-menu--list-item">
+                            <a href="/Orders.asp" class="pg-c-menu--link">Orders</a>
+                        </li>
+                        <li class="pg-c-menu--list-item">
+                            <a href="/Cart.asp" class="pg-c-menu--link">Shopping Cart</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Right Navigation Bar --> <!-- Menu -->
+                <div class="pg-c-menu pg-c-menu--right">
+                    <ul class="pg-c-menu--list">
+                        <li class="pg-c-menu--list-item">
+							<a id="logout" class="pg-c-menu--link" href="/Login.asp?red=//capstone.mybrandstorefront.com">Logout</a>
+                        </li>
+                    </ul>
+
+                    <label for="pg-c-menu--mobile-check" class="pg-c-menu--mobile-button">
+                        <ul class="pg-c-menu--mobile-hamburger">
+                            <li class="pg-c-menu--mobile-line"></li>
+                            <li class="pg-c-menu--mobile-line"></li>
+                            <li class="pg-c-menu--mobile-line"></li>
+                        </ul>
+                    </label>
+                </div>
+                <!--/LoggedIn-->
+            </div>
+        </nav>
+
+        <div class="pg-c-main">
+
+            <div class="pg-c-main--top">
+                <!--Title-->
+                <h1 class="pg-c-main--breadcrumbs"><a href="/RetailSite.asp">Home</a> <span class="pg-c-main--breadcrumb-arrow">></span> {Title}</h1>
+                <!--/Title-->
+                <!--HelpText-->
+                <blockquote class="pg-c-main--help">{HelpText}</blockquote>
+                <!--/HelpText-->
+            </div>
+
+            <div class="pg-c-main--content">
+                <!--CONTENT-->
+                <!--/CONTENT-->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="pg-c-footer-container">
+            <div class="pg-c-footer">
+                <div class="pg-c-footer--column">
+                    <img src="Files/BrokerBranding/capstone/Include/logo.png" alt="Capstone Administrators" class="pg-c-brand--logo">
+                </div>
+
+                <div class="pg-c-footer--column">
+                    <h3 class="pg-c-footer--column-title">Shop</h3>
+                    <a href="/ProductCats.asp?cid=534&category=men" class="pg-c-footer--link">Men's Apparel</a>
+                    <a href="/ProductCats.asp?cid=534&category=women" class="pg-c-footer--link">Women's Apparel</a>
+                    <a href="/ProductCats.asp?cid=534&category=all portauthority" class="pg-c-footer--link">Port Authority</a>
+                    <a href="/ProductCats.asp?cid=534&category=all bellacanvas" class="pg-c-footer--link">Bella + Canvas</a>
+                    <a href="/ProductCats.asp?cid=534&category=all sporttek" class="pg-c-footer--link">Sport Tek</a>
+                    <a href="/ProductCats.asp?cid=534&category=all eddiebauer" class="pg-c-footer--link">Eddie Bauer</a>
+                    <a href="/ProductCats.asp?cid=534&category=all ogio" class="pg-c-footer--link">OGIO</a>
+                </div>
+
+                <div class="pg-c-footer--column">
+                    <h3 class="pg-c-footer--column-title">Account</h3>
+                    <a href="/Registration.asp" class="pg-c-footer--link">My Account</a>
+                    <a href="/Orders.asp" class="pg-c-footer--link">My Orders</a>
+                    <a href="/Cart.asp" class="pg-c-footer--link">My Shopping Cart</a>
+                </div>
+
+                <div class="pg-c-footer--column">
+                    <h3 class="pg-c-footer--column-title">Contact</h3>
+                    <p class="pg-c-footer--link"><b>Shirley Engraving</b></p>
+                    <p class="pg-c-footer--link">4026 W. 10th Street</p>
+                    <p class="pg-c-footer--link">Indianapolis, IN 46222</p>
+                </div>
+            </div>
+
+            <small class="pg-c-copyright">Copyright &copy; 2021 Priority Group, Inc. All Rights Reserved.</small>
+        </footer>
+        
+        <!-- Priority Group JavaScript -->
+        <script src="Files/BrokerBranding/capstone/Include/app.js"></script>
+	</body>
+</html>
