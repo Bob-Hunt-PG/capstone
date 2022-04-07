@@ -2303,9 +2303,6 @@ input#btnsave {
   border-radius: 10rem;
 }
 
-.color.black {
-  background: #000000;
-}
 
 .color.grey.smoke {
   background: #717777;
@@ -3019,6 +3016,20 @@ input#btnsave {
 .color.fracture {
   background: #534b52;
 }
+
+
+/* Universal colors */
+.color.black {
+  background: #000000;
+}
+
+.color.white {
+  background: #ffffff;
+  border: 1px solid #f5f5f5;
+}
+
+/* END Universal colors */
+
 
 @media (max-width: 575.98px) {
   .pg-c-slider {
